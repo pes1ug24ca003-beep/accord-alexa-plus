@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import sys
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 import unittest
 
@@ -42,7 +42,7 @@ class TestAgreementVersioning(unittest.TestCase):
             task="dishes",
             frequency="weekly",
             estimated_effort=30.0,
-            assigned_date=datetime.utcnow(),
+            assigned_date=datetime.now(UTC),
             status="scheduled",
         )
         agreement = AgreementVersion(
@@ -57,7 +57,11 @@ class TestAgreementVersioning(unittest.TestCase):
         agreement.register_approval("m1")
         agreement.register_veto("m2")
         agreement.register_counteroffer(
-            Counteroffer(member_id="m3", message="swap trash and dishes", submitted_at=datetime.utcnow())
+            Counteroffer(
+                member_id="m3",
+                message="swap trash and dishes",
+                submitted_at=datetime.now(UTC),
+            )
         )
 
         self.assertEqual(agreement.version, 1)
