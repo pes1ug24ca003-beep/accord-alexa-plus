@@ -47,6 +47,7 @@ class TestAgreementVersioning(unittest.TestCase):
         )
         agreement = AgreementVersion(
             agreement_id="ag-1",
+            household_id="h1",
             version=1,
             status=AgreementStatus.PROPOSED,
             proposal=[assignment],
@@ -90,6 +91,7 @@ class TestStateTransitions(unittest.TestCase):
     def test_agreement_invalid_transition_raises(self) -> None:
         agreement = AgreementVersion(
             agreement_id="ag-1",
+            household_id="h1",
             version=1,
             status=AgreementStatus.ACTIVE,
             proposal=[],

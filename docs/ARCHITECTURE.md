@@ -70,3 +70,16 @@ Storage boundary:
 ### Privacy boundary in contract responses
 - Shared interview responses must use the safe session summary shape (no raw transcript data or transcript reference leakage).
 - Derived constraints are the only shareable interview outputs entering agreement generation and solver inputs.
+
+## TASK 003 backend core service decisions
+- FastAPI service implementation lives under `/apps/api/src/accord_api` with separation between routes, services/use-cases, repositories, privacy guards, serializers, and config.
+- In-memory repository implementations are used for all entities and intentionally abstracted so persistent storage (for example PostgreSQL) can replace them later without changing route handlers.
+- Deterministic placeholder fairness solver is implemented behind the `DeterministicFairnessSolver` interface boundary. It consumes structured constraints/task-effort data and is replaceable without API rewrites.
+- Deterministic drift detection service computes deviations from expected vs observed contributions and emits actionable severity/evidence.
+
+### Enforced privacy boundary in application code
+- Authorization checks execute before serialization for member-scoped resources.
+- Unauthorized requests return generic not-found errors to avoid confirming hidden private data exists.
+- Private interview payloads are available only through member-authorized private endpoints.
+- Shared endpoints never include raw private transcript content or transcript references.
+- Agreement generation only consumes constraints explicitly marked `shareable_derived`.

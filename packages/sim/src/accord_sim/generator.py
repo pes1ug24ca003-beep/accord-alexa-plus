@@ -19,29 +19,69 @@ class DefaultSimulationProvider(SimulationProvider):
             "scenarioMetadata": {
                 "mode": "simulated",
                 "description": "Three roommates negotiating household chores",
+                "scenario": "priya-rahul-aman",
             },
             "members": [],
         }
 
     def synthetic_members(self, household_id: str, count: int = 3) -> list[dict]:
-        roles = ["roommate", "roommate", "roommate"]
-        members = []
-        for idx in range(count):
-            members.append(
-                {
-                    "memberId": f"{household_id}-member-{idx + 1}",
-                    "displayName": f"Roommate {idx + 1}",
-                    "role": roles[min(idx, len(roles) - 1)],
-                    "consentStatus": "granted",
-                    "privacyStatus": "private_only",
-                }
-            )
-        return members
+        base = [
+            {
+                "displayName": "Priya",
+                "role": "roommate",
+                "consentStatus": "granted",
+                "privacyStatus": "private_only",
+                "profile": {"prefers": "cooking", "dislikes": "bathroom cleaning"},
+            },
+            {
+                "displayName": "Rahul",
+                "role": "roommate",
+                "consentStatus": "granted",
+                "privacyStatus": "private_only",
+                "profile": {
+                    "prefers": "cleaning",
+                    "availability": "limited weekday availability",
+                },
+            },
+            {
+                "displayName": "Aman",
+                "role": "roommate",
+                "consentStatus": "granted",
+                "privacyStatus": "private_only",
+                "profile": {"schedule": "flexible", "dislikes": "repeated chores"},
+            },
+        ]
+        result = []
+        for idx in range(min(count, len(base))):
+            payload = dict(base[idx])
+            payload["memberId"] = f"{household_id}-member-{idx + 1}"
+            result.append(payload)
+        return result
 
     def simulated_interview_responses(self, household_id: str, member_ids: list[str]) -> list[dict]:
-        categories = ["availability", "task_preference", "hard_constraint"]
+        interview_templates = [
+            {
+                "category": "task_preference",
+                "preferenceOrRequirement": "prefers cooking-related tasks, avoid bathroom cleaning",
+                "importanceWeight": 0.82,
+                "flexibility": 0.30,
+            },
+            {
+                "category": "availability",
+                "preferenceOrRequirement": "limited weekday availability, prefer weekend blocks",
+                "importanceWeight": 0.78,
+                "flexibility": 0.45,
+            },
+            {
+                "category": "rotation",
+                "preferenceOrRequirement": "avoid repeated chores in consecutive weeks",
+                "importanceWeight": 0.66,
+                "flexibility": 0.70,
+            },
+        ]
         responses = []
         for idx, member_id in enumerate(member_ids):
+            template = interview_templates[idx % len(interview_templates)]
             responses.append(
                 {
                     "sessionId": f"{household_id}-session-{idx + 1}",
@@ -53,10 +93,10 @@ class DefaultSimulationProvider(SimulationProvider):
                         {
                             "constraintId": f"{member_id}-c1",
                             "memberId": member_id,
-                            "category": categories[idx % len(categories)],
-                            "preferenceOrRequirement": "prefers evening chores",
-                            "importanceWeight": round(0.6 + 0.1 * idx, 2),
-                            "flexibility": round(0.5 - 0.05 * idx, 2),
+                            "category": template["category"],
+                            "preferenceOrRequirement": template["preferenceOrRequirement"],
+                            "importanceWeight": template["importanceWeight"],
+                            "flexibility": template["flexibility"],
                             "privacyClassification": "shareable_derived",
                             "sourceSessionReference": f"{household_id}-session-{idx + 1}",
                         }
@@ -66,7 +106,8 @@ class DefaultSimulationProvider(SimulationProvider):
         return responses
 
     def simulated_assignments(self, household_id: str, member_ids: list[str], start_at: datetime) -> list[dict]:
-        tasks = ["dishes", "trash", "bathroom"]
+        tasks = ["meal_prep", "bathroom_cleaning", "trash_and_recycling"]
+        effort = [35.0, 40.0, 20.0]
         assignments = []
         for idx, member_id in enumerate(member_ids):
             assignments.append(
@@ -75,7 +116,7 @@ class DefaultSimulationProvider(SimulationProvider):
                     "memberId": member_id,
                     "task": tasks[idx % len(tasks)],
                     "frequency": "weekly",
-                    "estimatedEffort": float(30 + idx * 10),
+                    "estimatedEffort": effort[idx % len(effort)],
                     "assignedDate": (start_at + timedelta(days=idx)).isoformat(),
                     "status": "scheduled",
                 }
@@ -91,7 +132,8 @@ class DefaultSimulationProvider(SimulationProvider):
         for day in range(days):
             assignment = assignments[day % len(assignments)]
             expected = assignment["estimatedEffort"]
-            observed = max(0.0, expected - self._rng.uniform(0.0, expected * 0.25))
+            deterministic_variance = self._rng.uniform(0.03, 0.22)
+            observed = max(0.0, expected * (1.0 - deterministic_variance))
             signals.append(
                 {
                     "signalId": f"signal-{day + 1}",

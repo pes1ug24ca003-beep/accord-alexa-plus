@@ -1,9 +1,10 @@
-"""Accord API schema and contract layer (TASK 002)."""
+"""Accord backend core package."""
 
 from .models import (
     AgreementStatus,
     AgreementVersion,
     Assignment,
+    AssignmentStatus,
     ConsentStatus,
     Counteroffer,
     DerivedConstraint,
@@ -17,17 +18,21 @@ from .models import (
     PrivateInterviewSession,
     PrivacyClassification,
     PrivacyStatus,
+    RenegotiationCycle,
+    RenegotiationStatus,
 )
 from .solver_interface import (
     DeterministicFairnessSolver,
     SolverInput,
     SolverOutput,
+    TaskEffort,
 )
 
 __all__ = [
     "AgreementStatus",
     "AgreementVersion",
     "Assignment",
+    "AssignmentStatus",
     "ConsentStatus",
     "Counteroffer",
     "DerivedConstraint",
@@ -41,7 +46,10 @@ __all__ = [
     "PrivateInterviewSession",
     "PrivacyClassification",
     "PrivacyStatus",
+    "RenegotiationCycle",
+    "RenegotiationStatus",
     "DeterministicFairnessSolver",
     "SolverInput",
     "SolverOutput",
+    "TaskEffort",
 ]

@@ -1,474 +1,269 @@
 openapi: 3.1.0
 info:
-  title: Accord API Contracts (TASK 002)
-  version: 0.1.0
+  title: Accord API
+  version: 0.3.0
   description: >-
-    Contract-only API surface for the simulated Accord prototype.
-    Privacy boundary: shared APIs never expose raw private transcript content.
+    Accord backend core service for simulated household negotiation.
+    Privacy boundary: raw private interview transcripts are never exposed in shared API responses.
 servers:
-  - url: https://simulated.accord.local
+  - url: http://localhost:8000
 paths:
-  /households:
+  /api/households:
     post:
       summary: Create household
-      operationId: createHousehold
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateHouseholdRequest'
       responses:
         '201':
           description: Household created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HouseholdResponse'
-  /households/{householdId}/members:
+  /api/households/{householdId}:
+    get:
+      summary: Get household
+      parameters:
+        - in: path
+          name: householdId
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Household details }
+        '404': { description: Not found }
+  /api/households/{householdId}/members:
     post:
       summary: Add member
-      operationId: addMember
       parameters:
-        - name: householdId
-          in: path
+        - in: path
+          name: householdId
           required: true
           schema: { type: string }
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AddMemberRequest'
       responses:
-        '200':
-          description: Member added
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HouseholdResponse'
-  /interviews:
+        '201': { description: Member created }
+    get:
+      summary: List members
+      parameters:
+        - in: path
+          name: householdId
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Member list }
+  /api/interviews:
     post:
       summary: Start private interview
-      operationId: startPrivateInterview
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/StartInterviewRequest'
       responses:
-        '201':
-          description: Interview session started
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PrivateInterviewSessionResponse'
-  /interviews/{sessionId}/submit:
+        '201': { description: Interview started }
+  /api/interviews/{sessionId}/submit:
     post:
-      summary: Submit and complete private interview
-      operationId: submitInterview
+      summary: Submit private interview
       parameters:
-        - name: sessionId
-          in: path
-          required: true
-          schema: { type: string }
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SubmitInterviewRequest'
-      responses:
-        '200':
-          description: Interview submitted
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PrivateInterviewSessionResponse'
-  /interviews/{sessionId}/constraints:derive:
-    post:
-      summary: Derive constraints from private interview
-      operationId: deriveConstraints
-      parameters:
-        - name: sessionId
-          in: path
+        - in: path
+          name: sessionId
           required: true
           schema: { type: string }
       responses:
-        '200':
-          description: Derived constraints
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DerivedConstraintsResponse'
-  /agreements:generate:
+        '200': { description: Interview submitted }
+        '404': { description: Not found }
+  /api/interviews/{sessionId}/complete:
     post:
-      summary: Generate agreement proposal
-      operationId: generateAgreementProposal
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/GenerateAgreementRequest'
+      summary: Complete private interview
+      parameters:
+        - in: path
+          name: sessionId
+          required: true
+          schema: { type: string }
       responses:
-        '200':
-          description: Proposed agreement version
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AgreementResponse'
-  /agreements/{agreementId}/versions/{version}/approve:
+        '200': { description: Interview completed }
+        '409': { description: Invalid transition }
+  /api/interviews/{sessionId}/private:
+    get:
+      summary: Retrieve requester private interview session
+      parameters:
+        - in: path
+          name: sessionId
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Private interview data }
+        '404': { description: Not found (including unauthorized) }
+  /api/constraints/derive/{sessionId}:
+    post:
+      summary: Derive structured constraints from interview
+      parameters:
+        - in: path
+          name: sessionId
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Constraints derived }
+  /api/constraints/members/{memberId}:
+    get:
+      summary: Retrieve member-scoped constraints
+      parameters:
+        - in: path
+          name: memberId
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Authorized private constraints }
+        '404': { description: Not found (including unauthorized) }
+  /api/constraints/households/{householdId}/shared:
+    get:
+      summary: Retrieve shared derived constraints
+      parameters:
+        - in: path
+          name: householdId
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Shareable constraints only }
+  /api/agreements/generate:
+    post:
+      summary: Generate deterministic proposal
+      responses:
+        '201': { description: Proposal created }
+  /api/agreements/{agreementId}/versions/{version}:
+    get:
+      summary: Retrieve proposal version
+      parameters:
+        - in: path
+          name: agreementId
+          required: true
+          schema: { type: string }
+        - in: path
+          name: version
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Agreement version }
+  /api/agreements/{agreementId}/history:
+    get:
+      summary: Retrieve agreement history
+      parameters:
+        - in: path
+          name: agreementId
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Version history }
+  /api/agreements/{agreementId}/versions/{version}/approve:
     post:
       summary: Approve proposal
-      operationId: approveProposal
       parameters:
-        - $ref: '#/components/parameters/AgreementId'
-        - $ref: '#/components/parameters/AgreementVersion'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MemberActionRequest'
+        - in: path
+          name: agreementId
+          required: true
+          schema: { type: string }
+        - in: path
+          name: version
+          required: true
+          schema: { type: integer }
       responses:
-        '200':
-          description: Approval recorded
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AgreementResponse'
-  /agreements/{agreementId}/versions/{version}/veto:
+        '200': { description: Approval recorded }
+  /api/agreements/{agreementId}/versions/{version}/veto:
     post:
       summary: Veto proposal
-      operationId: vetoProposal
       parameters:
-        - $ref: '#/components/parameters/AgreementId'
-        - $ref: '#/components/parameters/AgreementVersion'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/VetoRequest'
+        - in: path
+          name: agreementId
+          required: true
+          schema: { type: string }
+        - in: path
+          name: version
+          required: true
+          schema: { type: integer }
       responses:
-        '200':
-          description: Veto recorded
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AgreementResponse'
-  /agreements/{agreementId}/versions/{version}/counter:
+        '200': { description: Veto recorded }
+  /api/agreements/{agreementId}/versions/{version}/counter:
     post:
       summary: Counter proposal
-      operationId: counterProposal
       parameters:
-        - $ref: '#/components/parameters/AgreementId'
-        - $ref: '#/components/parameters/AgreementVersion'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CounterRequest'
+        - in: path
+          name: agreementId
+          required: true
+          schema: { type: string }
+        - in: path
+          name: version
+          required: true
+          schema: { type: integer }
       responses:
-        '200':
-          description: Counteroffer recorded
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AgreementResponse'
-  /agreements/{agreementId}/versions/{version}/activate:
+        '200': { description: Counteroffer recorded }
+  /api/agreements/{agreementId}/versions/{version}/activate:
     post:
       summary: Activate agreement
-      operationId: activateAgreement
       parameters:
-        - $ref: '#/components/parameters/AgreementId'
-        - $ref: '#/components/parameters/AgreementVersion'
+        - in: path
+          name: agreementId
+          required: true
+          schema: { type: string }
+        - in: path
+          name: version
+          required: true
+          schema: { type: integer }
       responses:
-        '200':
-          description: Agreement activated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AgreementResponse'
-  /monitoring/signals:
+        '200': { description: Agreement active }
+  /api/assignments:
+    post:
+      summary: Create assignment
+      responses:
+        '201': { description: Assignment created }
+  /api/assignments/households/{householdId}:
+    get:
+      summary: List assignments for household
+      parameters:
+        - in: path
+          name: householdId
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Assignment list }
+  /api/assignments/{assignmentId}/status:
+    patch:
+      summary: Update assignment status
+      parameters:
+        - in: path
+          name: assignmentId
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Status updated }
+        '404': { description: Not found (including unauthorized) }
+  /api/monitoring/signals:
     post:
       summary: Record monitoring signal
-      operationId: recordMonitoringSignal
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MonitoringSignal'
       responses:
-        '201':
-          description: Signal recorded
-  /drift:generate:
+        '201': { description: Signal recorded }
+  /api/monitoring/signals/households/{householdId}:
+    get:
+      summary: Retrieve monitoring signals
+      parameters:
+        - in: path
+          name: householdId
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Monitoring signals }
+  /api/drift/generate:
     post:
-      summary: Generate drift report
-      operationId: generateDriftReport
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/GenerateDriftReportRequest'
+      summary: Generate deterministic drift report
       responses:
-        '200':
-          description: Drift report
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DriftReport'
-  /renegotiations:start:
+        '201': { description: Drift report generated }
+  /api/drift/{driftId}:
+    get:
+      summary: Retrieve drift report
+      parameters:
+        - in: path
+          name: driftId
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Drift report }
+        '404': { description: Not found (including unauthorized) }
+  /api/drift/renegotiations/start:
     post:
-      summary: Start renegotiation
-      operationId: startRenegotiation
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/StartRenegotiationRequest'
+      summary: Start renegotiation cycle
       responses:
-        '201':
-          description: Renegotiation interview sessions started
-
+        '201': { description: Renegotiation started }
+  /api/demo/roommates/reset:
+    post:
+      summary: DEVELOPMENT/DEMO ONLY - reset deterministic roommate scenario
+      responses:
+        '201': { description: Scenario reset }
 components:
-  parameters:
-    AgreementId:
-      name: agreementId
-      in: path
-      required: true
-      schema: { type: string }
-    AgreementVersion:
-      name: version
-      in: path
-      required: true
-      schema: { type: integer, minimum: 1 }
-
-  schemas:
-    CreateHouseholdRequest:
-      type: object
-      required: [name]
-      properties:
-        name: { type: string }
-        scenarioMetadata:
-          type: object
-          additionalProperties: true
-
-    AddMemberRequest:
-      type: object
-      required: [displayName, role]
-      properties:
-        displayName: { type: string }
-        role: { type: string }
-        consentStatus: { type: string, enum: [pending, granted, revoked] }
-        privacyStatus: { type: string, enum: [private_only, derived_shareable] }
-
-    StartInterviewRequest:
-      type: object
-      required: [householdId, memberId]
-      properties:
-        householdId: { type: string }
-        memberId: { type: string }
-
-    SubmitInterviewRequest:
-      type: object
-      required: [transcriptReference]
-      properties:
-        transcriptReference:
-          type: string
-          description: Private storage reference only; never shared cross-member.
-
-    DerivedConstraint:
-      type: object
-      required:
-        - constraintId
-        - memberId
-        - category
-        - preferenceOrRequirement
-        - importanceWeight
-        - flexibility
-        - privacyClassification
-        - sourceSessionReference
-      properties:
-        constraintId: { type: string }
-        memberId: { type: string }
-        category: { type: string }
-        preferenceOrRequirement: { type: string }
-        importanceWeight: { type: number }
-        flexibility: { type: number }
-        privacyClassification: { type: string, enum: [private, shareable_derived] }
-        sourceSessionReference: { type: string }
-
-    GenerateAgreementRequest:
-      type: object
-      required: [householdId, derivedConstraintIds]
-      properties:
-        householdId: { type: string }
-        derivedConstraintIds:
-          type: array
-          items: { type: string }
-
-    MemberActionRequest:
-      type: object
-      required: [memberId]
-      properties:
-        memberId: { type: string }
-
-    VetoRequest:
-      type: object
-      required: [memberId, reason]
-      properties:
-        memberId: { type: string }
-        reason: { type: string }
-
-    CounterRequest:
-      type: object
-      required: [memberId, proposalDeltaSummary]
-      properties:
-        memberId: { type: string }
-        proposalDeltaSummary: { type: string }
-
-    Assignment:
-      type: object
-      required: [assignmentId, memberId, task, frequency, estimatedEffort, assignedDate, status]
-      properties:
-        assignmentId: { type: string }
-        memberId: { type: string }
-        task: { type: string }
-        frequency: { type: string }
-        estimatedEffort: { type: number }
-        assignedDate: { type: string, format: date-time }
-        status: { type: string }
-
-    AgreementVersion:
-      type: object
-      required: [agreementId, version, status, proposal, fairnessScore, rationale, createdAt]
-      properties:
-        agreementId: { type: string }
-        version: { type: integer }
-        status: { type: string, enum: [proposed, under_review, active, superseded, closed] }
-        proposal:
-          type: array
-          items:
-            $ref: '#/components/schemas/Assignment'
-        fairnessScore: { type: number }
-        rationale: { type: string }
-        approvals: { type: array, items: { type: string } }
-        vetoes: { type: array, items: { type: string } }
-        counteroffers:
-          type: array
-          items:
-            type: object
-            required: [memberId, message, submittedAt]
-            properties:
-              memberId: { type: string }
-              message: { type: string }
-              submittedAt: { type: string, format: date-time }
-        createdAt: { type: string, format: date-time }
-
-    MonitoringSignal:
-      type: object
-      required:
-        - signalId
-        - assignmentReference
-        - memberReference
-        - expectedContribution
-        - observedContribution
-        - timestamp
-      properties:
-        signalId: { type: string }
-        assignmentReference: { type: string }
-        memberReference: { type: string }
-        expectedContribution: { type: number }
-        observedContribution: { type: number }
-        timestamp: { type: string, format: date-time }
-
-    GenerateDriftReportRequest:
-      type: object
-      required: [agreementId, version]
-      properties:
-        agreementId: { type: string }
-        version: { type: integer }
-
-    DriftReport:
-      type: object
-      required:
-        - driftId
-        - agreementVersionReference
-        - affectedMembers
-        - detectedSignals
-        - severity
-        - explanation
-        - recommendedAction
-        - status
-      properties:
-        driftId: { type: string }
-        agreementVersionReference: { type: string }
-        affectedMembers: { type: array, items: { type: string } }
-        detectedSignals: { type: array, items: { type: string } }
-        severity: { type: string, enum: [low, medium, high] }
-        explanation: { type: string }
-        recommendedAction: { type: string }
-        status: { type: string, enum: [open, acknowledged, resolved] }
-
-    StartRenegotiationRequest:
-      type: object
-      required: [householdId, driftId]
-      properties:
-        householdId: { type: string }
-        driftId: { type: string }
-
-    HouseholdResponse:
-      type: object
-      required: [householdId, name, members]
-      properties:
-        householdId: { type: string }
-        name: { type: string }
-        members:
-          type: array
-          items:
-            type: object
-            properties:
-              memberId: { type: string }
-              displayName: { type: string }
-              role: { type: string }
-              consentStatus: { type: string }
-              privacyStatus: { type: string }
-        scenarioMetadata:
-          type: object
-          additionalProperties: true
-
-    PrivateInterviewSessionResponse:
-      type: object
-      description: Shared-safe interview response; transcript reference omitted.
-      required: [sessionId, householdId, memberId, status, extractedConstraintReferences]
-      properties:
-        sessionId: { type: string }
-        householdId: { type: string }
-        memberId: { type: string }
-        status: { type: string }
-        extractedConstraintReferences:
-          type: array
-          items: { type: string }
-
-    DerivedConstraintsResponse:
-      type: object
-      required: [constraints]
-      properties:
-        constraints:
-          type: array
-          items:
-            $ref: '#/components/schemas/DerivedConstraint'
-
-    AgreementResponse:
-      type: object
-      required: [agreement]
-      properties:
-        agreement:
-          $ref: '#/components/schemas/AgreementVersion'
+  securitySchemes: {}
