@@ -59,3 +59,14 @@ Storage boundary:
 - Stage 2: end-to-end API + web workflow with local persistence.
 - Stage 3: UI polish + richer monitoring visualizations.
 - Stage 4: optional hardening and broader testing.
+
+## TASK 002 contract-layer decisions
+- Canonical API contract is defined in `/apps/api/contracts/openapi.yaml`.
+- Python dataclass models in `/apps/api/src/accord_api/models.py` represent the initial backend schema/lifecycle rules.
+- Contract request/response types are defined in `/apps/api/src/accord_api/contracts.py`.
+- Fairness planning uses `/apps/api/src/accord_api/solver_interface.py` protocol only; no LLM or algorithm implementation is included in this stage.
+- Simulation interfaces live in `/packages/sim/src/accord_sim/interfaces.py` with deterministic synthetic provider in `/packages/sim/src/accord_sim/generator.py`.
+
+### Privacy boundary in contract responses
+- Shared interview responses must use the safe session summary shape (no raw transcript data or transcript reference leakage).
+- Derived constraints are the only shareable interview outputs entering agreement generation and solver inputs.

@@ -1,0 +1,474 @@
+openapi: 3.1.0
+info:
+  title: Accord API Contracts (TASK 002)
+  version: 0.1.0
+  description: >-
+    Contract-only API surface for the simulated Accord prototype.
+    Privacy boundary: shared APIs never expose raw private transcript content.
+servers:
+  - url: https://simulated.accord.local
+paths:
+  /households:
+    post:
+      summary: Create household
+      operationId: createHousehold
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateHouseholdRequest'
+      responses:
+        '201':
+          description: Household created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HouseholdResponse'
+  /households/{householdId}/members:
+    post:
+      summary: Add member
+      operationId: addMember
+      parameters:
+        - name: householdId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddMemberRequest'
+      responses:
+        '200':
+          description: Member added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HouseholdResponse'
+  /interviews:
+    post:
+      summary: Start private interview
+      operationId: startPrivateInterview
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartInterviewRequest'
+      responses:
+        '201':
+          description: Interview session started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivateInterviewSessionResponse'
+  /interviews/{sessionId}/submit:
+    post:
+      summary: Submit and complete private interview
+      operationId: submitInterview
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitInterviewRequest'
+      responses:
+        '200':
+          description: Interview submitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivateInterviewSessionResponse'
+  /interviews/{sessionId}/constraints:derive:
+    post:
+      summary: Derive constraints from private interview
+      operationId: deriveConstraints
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Derived constraints
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DerivedConstraintsResponse'
+  /agreements:generate:
+    post:
+      summary: Generate agreement proposal
+      operationId: generateAgreementProposal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateAgreementRequest'
+      responses:
+        '200':
+          description: Proposed agreement version
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgreementResponse'
+  /agreements/{agreementId}/versions/{version}/approve:
+    post:
+      summary: Approve proposal
+      operationId: approveProposal
+      parameters:
+        - $ref: '#/components/parameters/AgreementId'
+        - $ref: '#/components/parameters/AgreementVersion'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemberActionRequest'
+      responses:
+        '200':
+          description: Approval recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgreementResponse'
+  /agreements/{agreementId}/versions/{version}/veto:
+    post:
+      summary: Veto proposal
+      operationId: vetoProposal
+      parameters:
+        - $ref: '#/components/parameters/AgreementId'
+        - $ref: '#/components/parameters/AgreementVersion'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VetoRequest'
+      responses:
+        '200':
+          description: Veto recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgreementResponse'
+  /agreements/{agreementId}/versions/{version}/counter:
+    post:
+      summary: Counter proposal
+      operationId: counterProposal
+      parameters:
+        - $ref: '#/components/parameters/AgreementId'
+        - $ref: '#/components/parameters/AgreementVersion'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CounterRequest'
+      responses:
+        '200':
+          description: Counteroffer recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgreementResponse'
+  /agreements/{agreementId}/versions/{version}/activate:
+    post:
+      summary: Activate agreement
+      operationId: activateAgreement
+      parameters:
+        - $ref: '#/components/parameters/AgreementId'
+        - $ref: '#/components/parameters/AgreementVersion'
+      responses:
+        '200':
+          description: Agreement activated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgreementResponse'
+  /monitoring/signals:
+    post:
+      summary: Record monitoring signal
+      operationId: recordMonitoringSignal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MonitoringSignal'
+      responses:
+        '201':
+          description: Signal recorded
+  /drift:generate:
+    post:
+      summary: Generate drift report
+      operationId: generateDriftReport
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateDriftReportRequest'
+      responses:
+        '200':
+          description: Drift report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DriftReport'
+  /renegotiations:start:
+    post:
+      summary: Start renegotiation
+      operationId: startRenegotiation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartRenegotiationRequest'
+      responses:
+        '201':
+          description: Renegotiation interview sessions started
+
+components:
+  parameters:
+    AgreementId:
+      name: agreementId
+      in: path
+      required: true
+      schema: { type: string }
+    AgreementVersion:
+      name: version
+      in: path
+      required: true
+      schema: { type: integer, minimum: 1 }
+
+  schemas:
+    CreateHouseholdRequest:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        scenarioMetadata:
+          type: object
+          additionalProperties: true
+
+    AddMemberRequest:
+      type: object
+      required: [displayName, role]
+      properties:
+        displayName: { type: string }
+        role: { type: string }
+        consentStatus: { type: string, enum: [pending, granted, revoked] }
+        privacyStatus: { type: string, enum: [private_only, derived_shareable] }
+
+    StartInterviewRequest:
+      type: object
+      required: [householdId, memberId]
+      properties:
+        householdId: { type: string }
+        memberId: { type: string }
+
+    SubmitInterviewRequest:
+      type: object
+      required: [transcriptReference]
+      properties:
+        transcriptReference:
+          type: string
+          description: Private storage reference only; never shared cross-member.
+
+    DerivedConstraint:
+      type: object
+      required:
+        - constraintId
+        - memberId
+        - category
+        - preferenceOrRequirement
+        - importanceWeight
+        - flexibility
+        - privacyClassification
+        - sourceSessionReference
+      properties:
+        constraintId: { type: string }
+        memberId: { type: string }
+        category: { type: string }
+        preferenceOrRequirement: { type: string }
+        importanceWeight: { type: number }
+        flexibility: { type: number }
+        privacyClassification: { type: string, enum: [private, shareable_derived] }
+        sourceSessionReference: { type: string }
+
+    GenerateAgreementRequest:
+      type: object
+      required: [householdId, derivedConstraintIds]
+      properties:
+        householdId: { type: string }
+        derivedConstraintIds:
+          type: array
+          items: { type: string }
+
+    MemberActionRequest:
+      type: object
+      required: [memberId]
+      properties:
+        memberId: { type: string }
+
+    VetoRequest:
+      type: object
+      required: [memberId, reason]
+      properties:
+        memberId: { type: string }
+        reason: { type: string }
+
+    CounterRequest:
+      type: object
+      required: [memberId, proposalDeltaSummary]
+      properties:
+        memberId: { type: string }
+        proposalDeltaSummary: { type: string }
+
+    Assignment:
+      type: object
+      required: [assignmentId, memberId, task, frequency, estimatedEffort, assignedDate, status]
+      properties:
+        assignmentId: { type: string }
+        memberId: { type: string }
+        task: { type: string }
+        frequency: { type: string }
+        estimatedEffort: { type: number }
+        assignedDate: { type: string, format: date-time }
+        status: { type: string }
+
+    AgreementVersion:
+      type: object
+      required: [agreementId, version, status, proposal, fairnessScore, rationale, createdAt]
+      properties:
+        agreementId: { type: string }
+        version: { type: integer }
+        status: { type: string, enum: [proposed, under_review, active, superseded, closed] }
+        proposal:
+          type: array
+          items:
+            $ref: '#/components/schemas/Assignment'
+        fairnessScore: { type: number }
+        rationale: { type: string }
+        approvals: { type: array, items: { type: string } }
+        vetoes: { type: array, items: { type: string } }
+        counteroffers:
+          type: array
+          items:
+            type: object
+            required: [memberId, message, submittedAt]
+            properties:
+              memberId: { type: string }
+              message: { type: string }
+              submittedAt: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+
+    MonitoringSignal:
+      type: object
+      required:
+        - signalId
+        - assignmentReference
+        - memberReference
+        - expectedContribution
+        - observedContribution
+        - timestamp
+      properties:
+        signalId: { type: string }
+        assignmentReference: { type: string }
+        memberReference: { type: string }
+        expectedContribution: { type: number }
+        observedContribution: { type: number }
+        timestamp: { type: string, format: date-time }
+
+    GenerateDriftReportRequest:
+      type: object
+      required: [agreementId, version]
+      properties:
+        agreementId: { type: string }
+        version: { type: integer }
+
+    DriftReport:
+      type: object
+      required:
+        - driftId
+        - agreementVersionReference
+        - affectedMembers
+        - detectedSignals
+        - severity
+        - explanation
+        - recommendedAction
+        - status
+      properties:
+        driftId: { type: string }
+        agreementVersionReference: { type: string }
+        affectedMembers: { type: array, items: { type: string } }
+        detectedSignals: { type: array, items: { type: string } }
+        severity: { type: string, enum: [low, medium, high] }
+        explanation: { type: string }
+        recommendedAction: { type: string }
+        status: { type: string, enum: [open, acknowledged, resolved] }
+
+    StartRenegotiationRequest:
+      type: object
+      required: [householdId, driftId]
+      properties:
+        householdId: { type: string }
+        driftId: { type: string }
+
+    HouseholdResponse:
+      type: object
+      required: [householdId, name, members]
+      properties:
+        householdId: { type: string }
+        name: { type: string }
+        members:
+          type: array
+          items:
+            type: object
+            properties:
+              memberId: { type: string }
+              displayName: { type: string }
+              role: { type: string }
+              consentStatus: { type: string }
+              privacyStatus: { type: string }
+        scenarioMetadata:
+          type: object
+          additionalProperties: true
+
+    PrivateInterviewSessionResponse:
+      type: object
+      description: Shared-safe interview response; transcript reference omitted.
+      required: [sessionId, householdId, memberId, status, extractedConstraintReferences]
+      properties:
+        sessionId: { type: string }
+        householdId: { type: string }
+        memberId: { type: string }
+        status: { type: string }
+        extractedConstraintReferences:
+          type: array
+          items: { type: string }
+
+    DerivedConstraintsResponse:
+      type: object
+      required: [constraints]
+      properties:
+        constraints:
+          type: array
+          items:
+            $ref: '#/components/schemas/DerivedConstraint'
+
+    AgreementResponse:
+      type: object
+      required: [agreement]
+      properties:
+        agreement:
+          $ref: '#/components/schemas/AgreementVersion'

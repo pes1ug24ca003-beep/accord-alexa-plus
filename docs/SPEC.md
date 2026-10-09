@@ -85,3 +85,9 @@ All external touchpoints are simulated in this prototype:
 - **Simulated notifications**
 - **Simulated calendar events**
 - **Simulated household activity signals**
+
+## TASK 002 implementation boundary (data/contracts only)
+- Data model entities and state transitions are defined without UI implementation.
+- API contracts cover household/member/interview/constraint/agreement/monitoring/drift/renegotiation lifecycle actions.
+- Deterministic fairness solver is represented only as a typed interface consuming structured derived constraints and producing structured assignment proposals.
+- External integrations remain simulated-only at the interface level.
