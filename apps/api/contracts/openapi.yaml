@@ -1,0 +1,269 @@
+openapi: 3.1.0
+info:
+  title: Accord API
+  version: 0.3.0
+  description: >-
+    Accord backend core service for simulated household negotiation.
+    Privacy boundary: raw private interview transcripts are never exposed in shared API responses.
+servers:
+  - url: http://localhost:8000
+paths:
+  /api/households:
+    post:
+      summary: Create household
+      responses:
+        '201':
+          description: Household created
+  /api/households/{householdId}:
+    get:
+      summary: Get household
+      parameters:
+        - in: path
+          name: householdId
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Household details }
+        '404': { description: Not found }
+  /api/households/{householdId}/members:
+    post:
+      summary: Add member
+      parameters:
+        - in: path
+          name: householdId
+          required: true
+          schema: { type: string }
+      responses:
+        '201': { description: Member created }
+    get:
+      summary: List members
+      parameters:
+        - in: path
+          name: householdId
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Member list }
+  /api/interviews:
+    post:
+      summary: Start private interview
+      responses:
+        '201': { description: Interview started }
+  /api/interviews/{sessionId}/submit:
+    post:
+      summary: Submit private interview
+      parameters:
+        - in: path
+          name: sessionId
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Interview submitted }
+        '404': { description: Not found }
+  /api/interviews/{sessionId}/complete:
+    post:
+      summary: Complete private interview
+      parameters:
+        - in: path
+          name: sessionId
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Interview completed }
+        '409': { description: Invalid transition }
+  /api/interviews/{sessionId}/private:
+    get:
+      summary: Retrieve requester private interview session
+      parameters:
+        - in: path
+          name: sessionId
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Private interview data }
+        '404': { description: Not found (including unauthorized) }
+  /api/constraints/derive/{sessionId}:
+    post:
+      summary: Derive structured constraints from interview
+      parameters:
+        - in: path
+          name: sessionId
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Constraints derived }
+  /api/constraints/members/{memberId}:
+    get:
+      summary: Retrieve member-scoped constraints
+      parameters:
+        - in: path
+          name: memberId
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Authorized private constraints }
+        '404': { description: Not found (including unauthorized) }
+  /api/constraints/households/{householdId}/shared:
+    get:
+      summary: Retrieve shared derived constraints
+      parameters:
+        - in: path
+          name: householdId
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Shareable constraints only }
+  /api/agreements/generate:
+    post:
+      summary: Generate deterministic proposal
+      responses:
+        '201': { description: Proposal created }
+  /api/agreements/{agreementId}/versions/{version}:
+    get:
+      summary: Retrieve proposal version
+      parameters:
+        - in: path
+          name: agreementId
+          required: true
+          schema: { type: string }
+        - in: path
+          name: version
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Agreement version }
+  /api/agreements/{agreementId}/history:
+    get:
+      summary: Retrieve agreement history
+      parameters:
+        - in: path
+          name: agreementId
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Version history }
+  /api/agreements/{agreementId}/versions/{version}/approve:
+    post:
+      summary: Approve proposal
+      parameters:
+        - in: path
+          name: agreementId
+          required: true
+          schema: { type: string }
+        - in: path
+          name: version
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Approval recorded }
+  /api/agreements/{agreementId}/versions/{version}/veto:
+    post:
+      summary: Veto proposal
+      parameters:
+        - in: path
+          name: agreementId
+          required: true
+          schema: { type: string }
+        - in: path
+          name: version
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Veto recorded }
+  /api/agreements/{agreementId}/versions/{version}/counter:
+    post:
+      summary: Counter proposal
+      parameters:
+        - in: path
+          name: agreementId
+          required: true
+          schema: { type: string }
+        - in: path
+          name: version
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Counteroffer recorded }
+  /api/agreements/{agreementId}/versions/{version}/activate:
+    post:
+      summary: Activate agreement
+      parameters:
+        - in: path
+          name: agreementId
+          required: true
+          schema: { type: string }
+        - in: path
+          name: version
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Agreement active }
+  /api/assignments:
+    post:
+      summary: Create assignment
+      responses:
+        '201': { description: Assignment created }
+  /api/assignments/households/{householdId}:
+    get:
+      summary: List assignments for household
+      parameters:
+        - in: path
+          name: householdId
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Assignment list }
+  /api/assignments/{assignmentId}/status:
+    patch:
+      summary: Update assignment status
+      parameters:
+        - in: path
+          name: assignmentId
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Status updated }
+        '404': { description: Not found (including unauthorized) }
+  /api/monitoring/signals:
+    post:
+      summary: Record monitoring signal
+      responses:
+        '201': { description: Signal recorded }
+  /api/monitoring/signals/households/{householdId}:
+    get:
+      summary: Retrieve monitoring signals
+      parameters:
+        - in: path
+          name: householdId
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Monitoring signals }
+  /api/drift/generate:
+    post:
+      summary: Generate deterministic drift report
+      responses:
+        '201': { description: Drift report generated }
+  /api/drift/{driftId}:
+    get:
+      summary: Retrieve drift report
+      parameters:
+        - in: path
+          name: driftId
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Drift report }
+        '404': { description: Not found (including unauthorized) }
+  /api/drift/renegotiations/start:
+    post:
+      summary: Start renegotiation cycle
+      responses:
+        '201': { description: Renegotiation started }
+  /api/demo/roommates/reset:
+    post:
+      summary: DEVELOPMENT/DEMO ONLY - reset deterministic roommate scenario
+      responses:
+        '201': { description: Scenario reset }
+components:
+  securitySchemes: {}
